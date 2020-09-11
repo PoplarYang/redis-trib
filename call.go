@@ -30,14 +30,14 @@ var callCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) CallClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) CallClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
 		return errors.New("please check host:port for call command")
 	}
 
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (self *RedisTrib) CallClusterCmd(context *cli.Context) error {
 	cmdArgs := ToInterfaceArray(context.Args()[2:])
 
 	logrus.Printf(">>> Calling %s %s", cmd, cmdArgs)
-	_, err := self.EachRunCommandAndPrint(cmd, cmdArgs...)
+	_, err := rt.EachRunCommandAndPrint(cmd, cmdArgs...)
 	if err != nil {
 		logrus.Errorf("Command failed: %s", err)
 		return err

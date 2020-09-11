@@ -52,7 +52,7 @@ var importCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) ImportClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) ImportClusterCmd(context *cli.Context) error {
 	var addr string
 	var source string
 
@@ -69,12 +69,12 @@ func (self *RedisTrib) ImportClusterCmd(context *cli.Context) error {
 
 	// Load nodes info before parsing options, otherwise we can't
 	// handle --weight.
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
 	// Check cluster, only proceed if it looks sane.
-	self.CheckCluster(false)
+	rt.CheckCluster(false)
 
 	// Connect to the source node.
 	logrus.Printf(">>> Connecting to the source Redis instance")
@@ -88,7 +88,7 @@ func (self *RedisTrib) ImportClusterCmd(context *cli.Context) error {
 
 	// Build a slot -> node map
 	slots := make(map[int]*ClusterNode)
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		for key, _ := range node.Slots() {
 			slots[key] = node
 		}

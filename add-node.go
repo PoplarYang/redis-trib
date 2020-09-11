@@ -52,7 +52,7 @@ var addNodeCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
 	var newaddr string
 	var addr string
 	var masterID string
@@ -67,22 +67,22 @@ func (self *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
 	logrus.Printf(">>> Adding node %s to cluster %s", newaddr, addr)
 	// Check the existing cluster
 	// Load cluster information
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
-	self.CheckCluster(false)
+	rt.CheckCluster(false)
 
 	// If --master-id was specified, try to resolve it now so that we
 	// abort before starting with the node configuration.
 	if context.Bool("slave") {
 		masterID = context.String("master-id")
 		if masterID != "" {
-			master = self.GetNodeByName(masterID)
+			master = rt.GetNodeByName(masterID)
 			if master == nil {
 				logrus.Errorf("No such master ID %s", masterID)
 			}
 		} else {
-			master = self.GetMasterWithLeastReplicas()
+			master = rt.GetMasterWithLeastReplicas()
 			if master == nil {
 				logrus.Errorf("Can't selected a master node!")
 			} else {
@@ -102,7 +102,7 @@ func (self *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
 		logrus.Fatalf("Load new node %s info failed: %s!", newaddr, err.Error())
 	}
 	newNode.AssertEmpty()
-	self.AddNode(newNode)
+	rt.AddNode(newNode)
 
 	// Send CLUSTER FORGET to all the nodes but the node to remove
 	logrus.Printf(">>> Send CLUSTER MEET to node %s to make it join the cluster", newNode.String())
@@ -113,7 +113,7 @@ func (self *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
 	// Additional configuration is needed if the node is added as
 	// a slave.
 	if context.Bool("slave") {
-		self.WaitClusterJoin()
+		rt.WaitClusterJoin()
 		if master != nil {
 			logrus.Printf(">>> Configure node as replica of %s.", master.String())
 			newNode.ClusterReplicateWithNodeID(master.Name())

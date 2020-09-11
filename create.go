@@ -43,8 +43,8 @@ var createCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) CreateClusterCmd(context *cli.Context) error {
-	self.SetReplicasNum(context.Int("replicas"))
+func (rt *RedisTrib) CreateClusterCmd(context *cli.Context) error {
+	rt.SetReplicasNum(context.Int("replicas"))
 
 	logrus.Printf(">>> Creating cluster")
 	for _, addr := range context.Args() {
@@ -58,55 +58,55 @@ func (self *RedisTrib) CreateClusterCmd(context *cli.Context) error {
 		}
 		node.LoadInfo(false)
 		node.AssertEmpty()
-		self.AddNode(node)
+		rt.AddNode(node)
 	}
 
-	self.CheckCreateParameters()
-	logrus.Printf(">>> Performing hash slots allocation on %d nodes...", len(self.Nodes()))
-	self.AllocSlots()
-	self.ShowNodes()
+	rt.CheckCreateParameters()
+	logrus.Printf(">>> Performing hash slots allocation on %d nodes...", len(rt.Nodes()))
+	rt.AllocSlots()
+	rt.ShowNodes()
 	YesOrDie("Can I set the above configuration?")
-	self.FlushNodesConfig()
+	rt.FlushNodesConfig()
 	logrus.Printf(">>> Nodes configuration updated")
 	logrus.Printf(">>> Assign a different config epoch to each node")
-	self.AssignConfigEpoch()
+	rt.AssignConfigEpoch()
 	logrus.Printf(">>> Sending CLUSTER MEET messages to join the cluster")
-	self.JoinCluster()
+	rt.JoinCluster()
 
 	// Give one second for the join to start, in order to avoid that
 	// wait_cluster_join will find all the nodes agree about the config as
 	// they are still empty with unassigned slots.
 	time.Sleep(time.Second * 1)
-	self.WaitClusterJoin()
-	self.FlushNodesConfig() // Useful for the replicas
-	self.CheckCluster(false)
+	rt.WaitClusterJoin()
+	rt.FlushNodesConfig() // Useful for the replicas
+	rt.CheckCluster(false)
 	return nil
 }
 
-func (self *RedisTrib) CheckCreateParameters() bool {
-	repOpt := self.ReplicasNum()
-	masters := len(self.Nodes()) / (repOpt + 1)
+func (rt *RedisTrib) CheckCreateParameters() bool {
+	repOpt := rt.ReplicasNum()
+	masters := len(rt.Nodes()) / (repOpt + 1)
 
 	if masters < 3 {
 		logrus.Fatalf("*** ERROR: Invalid configuration for cluster creation.\n"+
 			"\t   *** Redis Cluster requires at least 3 master nodes.\n"+
 			"\t   *** This is not possible with %d nodes and %d replicas per node.\n"+
-			"\t   *** At least %d nodes are required.", len(self.Nodes()), repOpt, 3*(repOpt+1))
+			"\t   *** At least %d nodes are required.", len(rt.Nodes()), repOpt, 3*(repOpt+1))
 	}
 	return true
 }
 
-func (self *RedisTrib) FlushNodesConfig() {
-	for _, node := range self.Nodes() {
+func (rt *RedisTrib) FlushNodesConfig() {
+	for _, node := range rt.Nodes() {
 		node.FlushNodeConfig()
 	}
 }
 
-func (self *RedisTrib) JoinCluster() {
+func (rt *RedisTrib) JoinCluster() {
 	var first *ClusterNode = nil
 	var addr string
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if first == nil {
 			first = node
 			addr = fmt.Sprintf("%s:%d", node.Host(), node.Port())
@@ -116,11 +116,11 @@ func (self *RedisTrib) JoinCluster() {
 	}
 }
 
-func (self *RedisTrib) AllocSlots() {
+func (rt *RedisTrib) AllocSlots() {
 	// TODO:
 	var masters [](*ClusterNode)
-	nodeNum := len(self.Nodes())
-	mastersNum := len(self.Nodes()) / (self.ReplicasNum() + 1)
+	nodeNum := len(rt.Nodes())
+	mastersNum := len(rt.Nodes()) / (rt.ReplicasNum() + 1)
 
 	// The first step is to split instances by IP. This is useful as
 	// we'll try to allocate master nodes in different physical machines
@@ -132,7 +132,7 @@ func (self *RedisTrib) AllocSlots() {
 	// or at least a different virtual machine.
 	var ips map[string][](*ClusterNode)
 	ips = make(map[string][](*ClusterNode))
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		ips[node.Name()] = append(ips[node.Name()], node)
 	}
 
@@ -203,14 +203,14 @@ func (self *RedisTrib) AllocSlots() {
 	for _, assign := range types {
 		for _, m := range masters {
 			assignedReplicas = 0
-			for assignedReplicas < self.ReplicasNum() {
+			for assignedReplicas < rt.ReplicasNum() {
 				if nodeNum == 0 {
 					break
 				}
 				if assignVerbose {
 					if assign == "required" {
 						logrus.Printf("Requesting total of %d replicas (%d replicas assigned so far with %d total remaining).",
-							self.ReplicasNum(), assignedReplicas, nodeNum)
+							rt.ReplicasNum(), assignedReplicas, nodeNum)
 					} else if assign == "unused" {
 						logrus.Printf("Assigning extra instance to replication role too (%d remaining).", nodeNum)
 					}

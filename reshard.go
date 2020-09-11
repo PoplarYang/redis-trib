@@ -70,25 +70,25 @@ var reshardCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
 		return errors.New("please check host:port for reshard command")
 	}
 
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
-	self.CheckCluster(false)
+	rt.CheckCluster(false)
 
-	if len(self.Errors()) > 0 {
+	if len(rt.Errors()) > 0 {
 		logrus.Fatalf("*** Please fix your cluster problem before resharding.")
 	}
 
 	if context.Int("timeout") > 0 {
-		self.SetTimeout(context.Int("timeout"))
+		rt.SetTimeout(context.Int("timeout"))
 	}
 
 	// Get number of slots
@@ -116,7 +116,7 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 	// Get the target instance
 	var target *ClusterNode
 	if context.String("to") != "" {
-		target = self.GetNodeByName(context.String("to"))
+		target = rt.GetNodeByName(context.String("to"))
 
 		if target == nil || target.HasFlag("slave") {
 			logrus.Fatalf("*** The specified node is not known or not a master, please retry.")
@@ -131,7 +131,7 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 			}
 			fmt.Printf("What is the receiving node ID? ")
 			text, _ := reader.ReadString('\n')
-			target = self.GetNodeByName(strings.TrimSpace(text))
+			target = rt.GetNodeByName(strings.TrimSpace(text))
 
 			if target == nil || target.HasFlag("slave") {
 				logrus.Printf("*** The specified node is not known or not a master, please retry.")
@@ -153,7 +153,7 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 				sources = append(sources, "all")
 				break
 			} else {
-				node := self.GetNodeByName(nodeID)
+				node := rt.GetNodeByName(nodeID)
 				if node == nil || node.HasFlag("slave") {
 					logrus.Fatalf("*** The specified node is not known or not a master, please retry.")
 				}
@@ -170,7 +170,7 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 			fmt.Printf("Source node #%d:", len(sources)+1)
 			text, _ := reader.ReadString('\n')
 			text = strings.TrimSpace(text)
-			src := self.GetNodeByName(text)
+			src := rt.GetNodeByName(text)
 
 			if text == "done" {
 				break
@@ -200,7 +200,7 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 		if found && str == "all" {
 			sources = sources[:0]
 
-			for _, node := range self.Nodes() {
+			for _, node := range rt.Nodes() {
 				if node.Name() == target.Name() || node.HasFlag("slave") {
 					continue
 				}
@@ -232,9 +232,9 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 	logrus.Printf("  Destination node: %s", target.InfoString())
 
 	// TODO: ComputeReshardTable
-	reshardTable := self.ComputeReshardTable(srcs, numSlots)
+	reshardTable := rt.ComputeReshardTable(srcs, numSlots)
 	logrus.Printf("  Resharding plan:")
-	self.ShowReshardTable(reshardTable)
+	rt.ShowReshardTable(reshardTable)
 
 	if !context.Bool("yes") {
 		fmt.Printf("Do you want to proceed with the proposed reshard plan (yes/no)? ")
@@ -260,7 +260,7 @@ func (self *RedisTrib) ReshardClusterCmd(context *cli.Context) error {
 	// TODO: Move slots
 	for _, e := range reshardTable {
 		// move slot
-		self.MoveSlot(e, target, opts)
+		rt.MoveSlot(e, target, opts)
 	}
 
 	return nil

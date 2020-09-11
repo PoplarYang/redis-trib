@@ -30,7 +30,7 @@ var setTimeoutCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) SetTimeoutClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) SetTimeoutClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
@@ -46,7 +46,7 @@ func (self *RedisTrib) SetTimeoutClusterCmd(context *cli.Context) error {
 	}
 
 	// Load cluster information
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 	okCount := 0
@@ -55,7 +55,7 @@ func (self *RedisTrib) SetTimeoutClusterCmd(context *cli.Context) error {
 	// Send CLUSTER FORGET to all the nodes but the node to remove
 	logrus.Printf(">>> Reconfiguring node timeout in every cluster node...")
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if _, err := node.Call("CONFIG", "set", "cluster-node-timeout", millisec); err != nil {
 			logrus.Errorf("ERR setting node-timeot in set operation for %s: %s", node.String(), err.Error())
 			errCount += 1

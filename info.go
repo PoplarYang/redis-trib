@@ -29,17 +29,17 @@ var infoCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) InfoClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) InfoClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
 		return errors.New("please check host:port for info command")
 	}
 
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
-	self.ShowClusterInfo()
+	rt.ShowClusterInfo()
 	return nil
 }

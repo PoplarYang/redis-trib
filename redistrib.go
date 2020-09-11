@@ -25,7 +25,7 @@ const (
 )
 
 type RedisTrib struct {
-	nodes       [](*ClusterNode)
+	nodes       []*ClusterNode
 	fix         bool
 	errors      []error
 	timeout     int
@@ -41,50 +41,50 @@ func NewRedisTrib() (rt *RedisTrib) {
 	return rt
 }
 
-func (self *RedisTrib) AddNode(node *ClusterNode) {
-	self.nodes = append(self.nodes, node)
+func (rt *RedisTrib) AddNode(node *ClusterNode) {
+	rt.nodes = append(rt.nodes, node)
 }
 
-func (self *RedisTrib) Nodes() [](*ClusterNode) {
-	return self.nodes
+func (rt *RedisTrib) Nodes() [](*ClusterNode) {
+	return rt.nodes
 }
 
-func (self *RedisTrib) ResetNodes() {
-	self.nodes = []*ClusterNode{}
+func (rt *RedisTrib) ResetNodes() {
+	rt.nodes = []*ClusterNode{}
 }
 
-func (self *RedisTrib) SetFix(fix bool) {
-	self.fix = fix
+func (rt *RedisTrib) SetFix(fix bool) {
+	rt.fix = fix
 }
 
-func (self *RedisTrib) ClusterError(err string) {
-	self.errors = append(self.errors, errors.New(err))
+func (rt *RedisTrib) ClusterError(err string) {
+	rt.errors = append(rt.errors, errors.New(err))
 	logrus.Errorf(err)
 }
 
-func (self *RedisTrib) Errors() []error {
-	return self.errors
+func (rt *RedisTrib) Errors() []error {
+	return rt.errors
 }
 
-func (self *RedisTrib) Timeout() int {
-	return self.timeout
+func (rt *RedisTrib) Timeout() int {
+	return rt.timeout
 }
 
-func (self *RedisTrib) SetTimeout(timeout int) {
-	self.timeout = timeout
+func (rt *RedisTrib) SetTimeout(timeout int) {
+	rt.timeout = timeout
 }
 
-func (self *RedisTrib) ReplicasNum() int {
-	return self.replicasNum
+func (rt *RedisTrib) ReplicasNum() int {
+	return rt.replicasNum
 }
 
-func (self *RedisTrib) SetReplicasNum(replicasNum int) {
-	self.replicasNum = replicasNum
+func (rt *RedisTrib) SetReplicasNum(replicasNum int) {
+	rt.replicasNum = replicasNum
 }
 
 // Return the node with the specified ID or Nil.
-func (self *RedisTrib) GetNodeByName(name string) (node *ClusterNode) {
-	for _, node := range self.Nodes() {
+func (rt *RedisTrib) GetNodeByName(name string) (node *ClusterNode) {
+	for _, node := range rt.Nodes() {
 		if strToLower(node.Name()) == strToLower(name) {
 			return node
 		}
@@ -95,12 +95,12 @@ func (self *RedisTrib) GetNodeByName(name string) (node *ClusterNode) {
 // Like GetNodeByName but the specified name can be just the first
 // part of the node ID as long as the prefix in unique across the
 // cluster.
-func (self *RedisTrib) GetNodeByAbbreviatedName(name string) (n *ClusterNode) {
+func (rt *RedisTrib) GetNodeByAbbreviatedName(name string) (n *ClusterNode) {
 	length := len(name)
 	var candidates = []*ClusterNode{}
 
 	name = strings.ToLower(name)
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.Name()[0:length] == name {
 			candidates = append(candidates, node)
 		}
@@ -116,9 +116,9 @@ func (self *RedisTrib) GetNodeByAbbreviatedName(name string) (n *ClusterNode) {
 // This function returns the master that has the least number of replicas
 // in the cluster. If there are multiple masters with the same smaller
 // number of replicas, one at random is returned.
-func (self *RedisTrib) GetMasterWithLeastReplicas() (node *ClusterNode) {
+func (rt *RedisTrib) GetMasterWithLeastReplicas() (node *ClusterNode) {
 	mnodes := [](*ClusterNode){}
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("master") {
 			mnodes = append(mnodes, node)
 		}
@@ -139,23 +139,23 @@ func (self *RedisTrib) GetMasterWithLeastReplicas() (node *ClusterNode) {
 	return mnodes[j]
 }
 
-func (self *RedisTrib) CheckCluster(quiet bool) {
-	logrus.Printf(">>> Performing Cluster Check (using node %s).", self.Nodes()[0].String())
+func (rt *RedisTrib) CheckCluster(quiet bool) {
+	logrus.Printf(">>> Performing Cluster Check (using node %s).", rt.Nodes()[0].String())
 
 	if !quiet {
-		self.ShowNodes()
+		rt.ShowNodes()
 	}
 
-	self.CheckConfigConsistency()
-	self.CheckOpenSlots()
-	self.CheckSlotsCoverage()
+	rt.CheckConfigConsistency()
+	rt.CheckOpenSlots()
+	rt.CheckSlotsCoverage()
 }
 
-func (self *RedisTrib) ShowClusterInfo() {
+func (rt *RedisTrib) ShowClusterInfo() {
 	masters := 0
 	keys := 0
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("master") {
 			dbsize, err := node.Dbsize()
 			if err != nil {
@@ -173,8 +173,8 @@ func (self *RedisTrib) ShowClusterInfo() {
 	logrus.Printf("%.2f keys per slot on average.", kpslot)
 }
 
-func (self *RedisTrib) ShowNodes() {
-	for _, n := range self.Nodes() {
+func (rt *RedisTrib) ShowNodes() {
+	for _, n := range rt.Nodes() {
 		logrus.Println(n.InfoString())
 	}
 }
@@ -184,27 +184,27 @@ func (self *RedisTrib) ShowNodes() {
 // it is slow compared to assign a progressive config epoch to each node
 // before joining the cluster. However we do just a best-effort try here
 // since if we fail is not a problem.
-func (self *RedisTrib) AssignConfigEpoch() {
+func (rt *RedisTrib) AssignConfigEpoch() {
 	configEpoch := 1
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		node.Call("CLUSTER", "set-config-epoch", configEpoch)
 		configEpoch += 1
 	}
 }
 
-func (self *RedisTrib) CheckConfigConsistency() {
-	if !self.isConfigConsistent() {
-		self.ClusterError("Nodes don't agree about configuration!")
+func (rt *RedisTrib) CheckConfigConsistency() {
+	if !rt.isConfigConsistent() {
+		rt.ClusterError("Nodes don't agree about configuration!")
 	} else {
 		logrus.Printf("[OK] All nodes agree about slots configuration.")
 	}
 }
 
-func (self *RedisTrib) isConfigConsistent() bool {
+func (rt *RedisTrib) isConfigConsistent() bool {
 	clean := true
 	oldSig := ""
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if len(oldSig) == 0 {
 			oldSig = node.GetConfigSignature()
 		} else {
@@ -220,11 +220,11 @@ func (self *RedisTrib) isConfigConsistent() bool {
 	return clean
 }
 
-func (self *RedisTrib) WaitClusterJoin() bool {
+func (rt *RedisTrib) WaitClusterJoin() bool {
 	logrus.Printf("Waiting for the cluster to join")
 
 	for {
-		if !self.isConfigConsistent() {
+		if !rt.isConfigConsistent() {
 			fmt.Printf(".")
 			time.Sleep(time.Second * 1)
 		} else {
@@ -237,7 +237,7 @@ func (self *RedisTrib) WaitClusterJoin() bool {
 
 // Return the node, among 'nodes' with the greatest number of keys
 // in the specified slot.
-func (self *RedisTrib) GetNodeWithMostKeysInSlot(nodes []*ClusterNode, slot int) (node *ClusterNode) {
+func (rt *RedisTrib) GetNodeWithMostKeysInSlot(nodes []*ClusterNode, slot int) (node *ClusterNode) {
 	var best *ClusterNode
 	bestNumkeys := 0
 
@@ -258,7 +258,7 @@ func (self *RedisTrib) GetNodeWithMostKeysInSlot(nodes []*ClusterNode, slot int)
 // Slot 'slot' was found to be in importing or migrating state in one or
 // more nodes. This function fixes this condition by migrating keys where
 // it seems more sensible.
-func (self *RedisTrib) FixOpenSlot(slot string) {
+func (rt *RedisTrib) FixOpenSlot(slot string) {
 	logrus.Printf(">>> Fixing open slot %s", slot)
 
 	slotnum, err := strconv.Atoi(slot)
@@ -269,14 +269,14 @@ func (self *RedisTrib) FixOpenSlot(slot string) {
 	// Try to obtain the current slot owner, according to the current
 	// nodes configuration.
 	var owner *ClusterNode
-	owners := self.GetSlotOwners(slotnum)
+	owners := rt.GetSlotOwners(slotnum)
 	if len(owners) == 1 {
 		owner = owners[0]
 	}
 
 	var migrating [](*ClusterNode)
 	var importing [](*ClusterNode)
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("slave") {
 			continue
 		}
@@ -301,7 +301,7 @@ func (self *RedisTrib) FixOpenSlot(slot string) {
 	// number of keys, among the set of migrating / importing nodes.
 	if owner == nil {
 		logrus.Printf(">>> Nobody claims ownership, selecting an owner...")
-		owner = self.GetNodeWithMostKeysInSlot(self.Nodes(), slotnum)
+		owner = rt.GetNodeWithMostKeysInSlot(rt.Nodes(), slotnum)
 
 		// If we still don't have an owner, we can't fix it.
 		if owner == nil {
@@ -333,7 +333,7 @@ func (self *RedisTrib) FixOpenSlot(slot string) {
 	// in migrating state, since migrating is a valid state only for
 	// slot owners.
 	if len(owners) > 1 {
-		owner = self.GetNodeWithMostKeysInSlot(owners, slotnum)
+		owner = rt.GetNodeWithMostKeysInSlot(owners, slotnum)
 		for _, node := range owners {
 			if node == owner {
 				continue
@@ -350,10 +350,10 @@ func (self *RedisTrib) FixOpenSlot(slot string) {
 
 // Merge slots of every known node. If the resulting slots are equal
 // to ClusterHashSlots, then all slots are served.
-func (self *RedisTrib) CoveredSlots() map[int]int {
+func (rt *RedisTrib) CoveredSlots() map[int]int {
 	slots := make(map[int]int)
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		for key, value := range node.Slots() {
 			slots[key] = value
 		}
@@ -361,10 +361,10 @@ func (self *RedisTrib) CoveredSlots() map[int]int {
 	return slots
 }
 
-func (self *RedisTrib) NotCoveredSlots() []int {
+func (rt *RedisTrib) NotCoveredSlots() []int {
 	index := 0
 	slots := []int{}
-	coveredSlots := self.CoveredSlots()
+	coveredSlots := rt.CoveredSlots()
 
 	for index <= ClusterHashSlots {
 		if _, ok := coveredSlots[index]; !ok {
@@ -374,32 +374,32 @@ func (self *RedisTrib) NotCoveredSlots() []int {
 	return slots
 }
 
-func (self *RedisTrib) CheckSlotsCoverage() {
+func (rt *RedisTrib) CheckSlotsCoverage() {
 	logrus.Printf(">>> Check slots coverage...")
-	slots := self.CoveredSlots()
+	slots := rt.CoveredSlots()
 	// add check open slots code.
 	if len(slots) == ClusterHashSlots {
 		logrus.Printf("[OK] All %d slots covered.", ClusterHashSlots)
 	} else {
-		self.ClusterError(fmt.Sprintf("Not all %d slots are covered by nodes.", ClusterHashSlots))
-		if self.fix {
-			self.FixSlotsCoverage()
+		rt.ClusterError(fmt.Sprintf("Not all %d slots are covered by nodes.", ClusterHashSlots))
+		if rt.fix {
+			rt.FixSlotsCoverage()
 		}
 	}
 }
 
-func (self *RedisTrib) CheckOpenSlots() {
+func (rt *RedisTrib) CheckOpenSlots() {
 	logrus.Printf(">>> Check for open slots...")
 	// add check open slots code.
 	var openSlots []string
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if len(node.Migrating()) > 0 {
 			keys := make([]string, len(node.Migrating()))
 			for k, _ := range node.Migrating() {
 				keys = append(keys, strconv.Itoa(k))
 			}
-			self.ClusterError(fmt.Sprintf("Node %s has slots in migrating state (%s).",
+			rt.ClusterError(fmt.Sprintf("Node %s has slots in migrating state (%s).",
 				node.String(), strings.Join(keys, ",")))
 			openSlots = append(openSlots, keys...)
 		}
@@ -408,7 +408,7 @@ func (self *RedisTrib) CheckOpenSlots() {
 			for k, _ := range node.Importing() {
 				keys = append(keys, strconv.Itoa(k))
 			}
-			self.ClusterError(fmt.Sprintf("Node %s has slots in importing state (%s).",
+			rt.ClusterError(fmt.Sprintf("Node %s has slots in importing state (%s).",
 				node.String(), strings.Join(keys, ",")))
 			openSlots = append(openSlots, keys...)
 		}
@@ -417,15 +417,15 @@ func (self *RedisTrib) CheckOpenSlots() {
 	if len(uniq) > 0 {
 		logrus.Warnf("The following slots are open: %s", strings.Join(uniq, ", "))
 	}
-	if self.fix {
+	if rt.fix {
 		for _, slot := range uniq {
-			self.FixOpenSlot(slot)
+			rt.FixOpenSlot(slot)
 		}
 	}
 }
 
-func (self *RedisTrib) NodesWithKeysInSlot(slot int) (nodes [](*ClusterNode)) {
-	for _, node := range self.Nodes() {
+func (rt *RedisTrib) NodesWithKeysInSlot(slot int) (nodes [](*ClusterNode)) {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("slave") {
 			continue
 		}
@@ -438,8 +438,8 @@ func (self *RedisTrib) NodesWithKeysInSlot(slot int) (nodes [](*ClusterNode)) {
 	return nodes
 }
 
-func (self *RedisTrib) FixSlotsCoverage() {
-	notCovered := self.NotCoveredSlots()
+func (rt *RedisTrib) FixSlotsCoverage() {
+	notCovered := rt.NotCoveredSlots()
 
 	logrus.Printf(">>> Fixing slots coverage...")
 	logrus.Printf("List of not covered slots: %s", NumArray2String(notCovered))
@@ -450,7 +450,7 @@ func (self *RedisTrib) FixSlotsCoverage() {
 	// 3) Multiple nodes have keys for this slot.
 	slots := make(map[int][](*ClusterNode))
 	for _, slot := range notCovered {
-		nodes := self.NodesWithKeysInSlot(slot)
+		nodes := rt.NodesWithKeysInSlot(slot)
 		slots[slot] = append(slots[slot], nodes...)
 		var nodesStr string
 		for _, node := range nodes {
@@ -478,7 +478,7 @@ func (self *RedisTrib) FixSlotsCoverage() {
 		logrus.Printf("The folowing uncovered slots have no keys across the cluster: %s", result)
 		YesOrDie("Fix these slots by covering with a random node?")
 		for _, slot := range none {
-			node := self.Nodes()[rand.Intn(len(self.Nodes()))]
+			node := rt.Nodes()[rand.Intn(len(rt.Nodes()))]
 			logrus.Printf(">>> Covering slot %d with %s.", slot, node.String())
 			node.ClusterAddSlots(slot)
 		}
@@ -502,7 +502,7 @@ func (self *RedisTrib) FixSlotsCoverage() {
 		logrus.Printf("The folowing uncovered slots have keys in multiple nodes: %s", result)
 		YesOrDie("Fix these slots by moving keys into a single node?")
 		for _, slot := range multi {
-			target := self.GetNodeWithMostKeysInSlot(slots[slot], slot)
+			target := rt.GetNodeWithMostKeysInSlot(slots[slot], slot)
 			if target != nil {
 				logrus.Printf(">>> Covering slot %d moving keys to %s", slot, target.String())
 				target.ClusterAddSlots(slot)
@@ -527,10 +527,10 @@ func (self *RedisTrib) FixSlotsCoverage() {
 }
 
 // Return the owner of the specified slot
-func (self *RedisTrib) GetSlotOwners(slot int) [](*ClusterNode) {
+func (rt *RedisTrib) GetSlotOwners(slot int) [](*ClusterNode) {
 	var owners [](*ClusterNode)
 
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("slave") {
 			continue
 		}
@@ -542,7 +542,7 @@ func (self *RedisTrib) GetSlotOwners(slot int) [](*ClusterNode) {
 }
 
 // Load cluster info from a cluster node.
-func (self *RedisTrib) LoadClusterInfoFromNode(addr string) error {
+func (rt *RedisTrib) LoadClusterInfoFromNode(addr string) error {
 	node := NewClusterNode(addr, &cli.Context{})
 
 	node.Connect(true)
@@ -552,7 +552,7 @@ func (self *RedisTrib) LoadClusterInfoFromNode(addr string) error {
 	if err := node.LoadInfo(true); err != nil {
 		return fmt.Errorf("load info from node %s failed", node)
 	}
-	self.AddNode(node)
+	rt.AddNode(node)
 
 	for _, n := range node.Friends() {
 		if n.HasFlag("noaddr") || n.HasFlag("disconnected") || n.HasFlag("fail") {
@@ -566,21 +566,21 @@ func (self *RedisTrib) LoadClusterInfoFromNode(addr string) error {
 		}
 
 		fnode.LoadInfo(false)
-		self.AddNode(fnode)
+		rt.AddNode(fnode)
 	}
 
-	self.PopulateNodesReplicasInfo()
+	rt.PopulateNodesReplicasInfo()
 	return nil
 }
 
 // This function is called by LoadClusterInfoFromNode in order to
 // add additional information to every node as a list of replicas.
-func (self *RedisTrib) PopulateNodesReplicasInfo() {
+func (rt *RedisTrib) PopulateNodesReplicasInfo() {
 	// Populate the replicas field using the replicate field of slave
 	// nodes.
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.Replicate() != "" {
-			master := self.GetNodeByName(node.Replicate())
+			master := rt.GetNodeByName(node.Replicate())
 			if master == nil {
 				logrus.Warnf("*** %s claims to be slave of unknown node ID %s.", node.String(), node.Replicate())
 			} else {
@@ -599,8 +599,8 @@ type InterfaceErrorCombo struct {
 
 type EachFunction func(*ClusterNode, interface{}, error, string, []interface{})
 
-func (self *RedisTrib) EachRunCommand(f EachFunction, cmd string, args ...interface{}) ([]*InterfaceErrorCombo, error) {
-	nodes := self.Nodes()
+func (rt *RedisTrib) EachRunCommand(f EachFunction, cmd string, args ...interface{}) ([]*InterfaceErrorCombo, error) {
+	nodes := rt.Nodes()
 
 	ies := make([]*InterfaceErrorCombo, len(nodes))
 
@@ -617,8 +617,8 @@ func (self *RedisTrib) EachRunCommand(f EachFunction, cmd string, args ...interf
 	return ies, nil
 }
 
-func (self *RedisTrib) EachRunCommandAndPrint(cmd string, args ...interface{}) ([]*InterfaceErrorCombo, error) {
-	return self.EachRunCommand(
+func (rt *RedisTrib) EachRunCommandAndPrint(cmd string, args ...interface{}) ([]*InterfaceErrorCombo, error) {
+	return rt.EachRunCommand(
 		func(node *ClusterNode, result interface{}, err error, cmd string, args []interface{}) {
 			val, _ := redis.String(result, err)
 
@@ -655,7 +655,7 @@ type MoveOpts struct {
 //  :cold    -- Move keys without opening slots / reconfiguring the nodes.
 //  :update  -- Update nodes.info[:slots] for source/target nodes.
 //  :quiet   -- Don't print info messages.
-func (self *RedisTrib) MoveSlot(source *MovedNode, target *ClusterNode, o *MoveOpts) {
+func (rt *RedisTrib) MoveSlot(source *MovedNode, target *ClusterNode, o *MoveOpts) {
 	// TODO: add move slot code
 	if o.Pipeline <= 0 {
 		o.Pipeline = MigrateDefaultPipeline
@@ -685,18 +685,18 @@ func (self *RedisTrib) MoveSlot(source *MovedNode, target *ClusterNode, o *MoveO
 
 			// XXX: migrate parameters check
 			var cmd []interface{}
-			cmd = append(cmd, target.Host(), target.Port(), "", 0, self.Timeout(), false, true, keys)
+			cmd = append(cmd, target.Host(), target.Port(), "", 0, rt.Timeout(), false, true, keys)
 			_, err := source.Source.Call("migrate", cmd...)
-			// _, _ = source.Source.Call("migrate", target.Host(), target.Port(), "", 0, self.Timeout(), "REPLACE", "KEYS", keys...)
+			// _, _ = source.Source.Call("migrate", target.Host(), target.Port(), "", 0, rt.Timeout(), "REPLACE", "KEYS", keys...)
 			if err != nil {
 				errinfo := err.Error()
 				if o.Fix && strings.Contains(errinfo, "BUSYKEY") {
 					logrus.Printf("*** Target key exists. Replacing it for FIX.")
 					// XXX: migrate parameters check
 					cmd = cmd[:0]
-					cmd = append(cmd, target.Host(), target.Port(), "", 0, self.Timeout(), true, true, keys)
+					cmd = append(cmd, target.Host(), target.Port(), "", 0, rt.Timeout(), true, true, keys)
 					_, _ = source.Source.Call("migrate", cmd...)
-					// _, _ = source.Source.Call("migrate", target.Host(), target.Port(), "", 0, self.Timeout(), keys, keys)
+					// _, _ = source.Source.Call("migrate", target.Host(), target.Port(), "", 0, rt.Timeout(), keys, keys)
 				} else {
 					logrus.Printf("\n")
 					logrus.Fatalf("[ERR] Calling MIGRATE: %s", errinfo)
@@ -715,7 +715,7 @@ func (self *RedisTrib) MoveSlot(source *MovedNode, target *ClusterNode, o *MoveO
 
 	// Set the new node as the owner of the slot in all the known nodes.
 	if !o.Cold {
-		for _, n := range self.Nodes() {
+		for _, n := range rt.Nodes() {
 			if n.HasFlag("slave") {
 				continue
 			}
@@ -733,7 +733,7 @@ func (self *RedisTrib) MoveSlot(source *MovedNode, target *ClusterNode, o *MoveO
 // Given a list of source nodes return a "resharding plan"
 // with what slots to move in order to move "numslots" slots to another
 // instance.
-func (self *RedisTrib) ComputeReshardTable(sources ClusterArray, numSlots int) []*MovedNode {
+func (rt *RedisTrib) ComputeReshardTable(sources ClusterArray, numSlots int) []*MovedNode {
 	// defined in clusternode.go
 	var moved []*MovedNode
 	// Sort from bigger to smaller instance, for two reasons:
@@ -780,7 +780,7 @@ func (self *RedisTrib) ComputeReshardTable(sources ClusterArray, numSlots int) [
 	return moved
 }
 
-func (self *RedisTrib) ShowReshardTable(table []*MovedNode) {
+func (rt *RedisTrib) ShowReshardTable(table []*MovedNode) {
 	for _, node := range table {
 		logrus.Printf("    Moving slot %d from %s", node.Slot, node.Source.Name())
 	}

@@ -42,20 +42,20 @@ var fixCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) FixClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) FixClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
 		return errors.New("please check host:port for fix command")
 	}
 
-	self.SetFix(true)
+	rt.SetFix(true)
 	timeout := context.Int("timeout")
-	self.SetTimeout(timeout)
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	rt.SetTimeout(timeout)
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
-	self.CheckCluster(false)
+	rt.CheckCluster(false)
 	return nil
 }

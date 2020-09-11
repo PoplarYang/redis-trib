@@ -29,17 +29,17 @@ var checkCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) CheckClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) CheckClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
 		return errors.New("please check host:port for check command")
 	}
 
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
-	self.CheckCluster(false)
+	rt.CheckCluster(false)
 	return nil
 }

@@ -78,7 +78,7 @@ var rebalanceCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 	var addr string
 
 	if addr = context.Args().Get(0); addr == "" {
@@ -87,7 +87,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 
 	// Load nodes info before parsing options, otherwise we can't
 	// handle --weight.
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
@@ -99,7 +99,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 	for _, e := range ws {
 		if e != "" && strings.Contains(e, "=") {
 			s := strings.Split(e, "=")
-			node := self.GetNodeByAbbreviatedName(s[0])
+			node := rt.GetNodeByAbbreviatedName(s[0])
 			if node == nil || !node.HasFlag("master") {
 				logrus.Fatalf("*** No such master node %s", s[0])
 			}
@@ -116,7 +116,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 	// Assign a weight to each node, and compute the total cluster weight.
 	totalWeight := 0
 	nodesInvolved := 0
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("master") {
 			if !useEmpty && len(node.Slots()) == 0 {
 				continue
@@ -133,8 +133,8 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 	}
 
 	// Check cluster, only proceed if it looks sane.
-	self.CheckCluster(true)
-	if len(self.Errors()) > 0 {
+	rt.CheckCluster(true)
+	if len(rt.Errors()) > 0 {
 		logrus.Fatalf("*** Please fix your cluster problem before rebalancing.")
 	}
 
@@ -143,7 +143,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 	// in order to be balanced.
 	threshold := context.Int("threshold")
 	thresholdReached := false
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("master") {
 			if node.Weight() == 0 {
 				continue
@@ -178,7 +178,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 
 	// Only consider nodes we want to change
 	var sn BalanceArray
-	for _, node := range self.Nodes() {
+	for _, node := range rt.Nodes() {
 		if node.HasFlag("master") && node.Weight() != 0 {
 			sn = append(sn, node)
 		}
@@ -241,7 +241,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 			// Actaully move the slots.
 			// TODO: add move slot code.
 			srcs := ClusterArray{*src}
-			reshardTable := self.ComputeReshardTable(srcs, int(numSlots))
+			reshardTable := rt.ComputeReshardTable(srcs, int(numSlots))
 			if len(reshardTable) != int(numSlots) {
 				logrus.Fatalf("*** Assertio failed: Reshard table != number of slots")
 			}
@@ -256,7 +256,7 @@ func (self *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 					Pipeline: context.Int("pipeline"),
 				}
 				for _, e := range reshardTable {
-					self.MoveSlot(e, dst, opts)
+					rt.MoveSlot(e, dst, opts)
 					logrus.Printf("#")
 				}
 			}

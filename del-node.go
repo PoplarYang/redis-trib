@@ -31,7 +31,7 @@ var delNodeCommand = cli.Command{
 	},
 }
 
-func (self *RedisTrib) DelNodeClusterCmd(context *cli.Context) error {
+func (rt *RedisTrib) DelNodeClusterCmd(context *cli.Context) error {
 	var addr string
 	var nodeid string
 
@@ -45,12 +45,12 @@ func (self *RedisTrib) DelNodeClusterCmd(context *cli.Context) error {
 	logrus.Printf(">>> Removing node %s from cluster %s", nodeid, addr)
 
 	// Load cluster information
-	if err := self.LoadClusterInfoFromNode(addr); err != nil {
+	if err := rt.LoadClusterInfoFromNode(addr); err != nil {
 		return err
 	}
 
 	// Check if the node exists and is not empty
-	node := self.GetNodeByName(nodeid)
+	node := rt.GetNodeByName(nodeid)
 	if node == nil {
 		logrus.Fatalf("No such node ID %s", nodeid)
 	}
@@ -60,13 +60,13 @@ func (self *RedisTrib) DelNodeClusterCmd(context *cli.Context) error {
 	}
 	// Send CLUSTER FORGET to all the nodes but the node to remove
 	logrus.Printf(">>> Sending CLUSTER FORGET messages to the cluster...")
-	for _, n := range self.Nodes() {
+	for _, n := range rt.Nodes() {
 		if n == nil || n == node {
 			continue
 		}
 
 		if n.Replicate() != "" && strings.ToLower(n.Replicate()) == nodeid {
-			master := self.GetMasterWithLeastReplicas()
+			master := rt.GetMasterWithLeastReplicas()
 			if master != nil {
 				logrus.Printf(">>> %s as replica of %s", n.String(), master.String())
 				if _, err := n.ClusterReplicateWithNodeID(master.Name()); err != nil {
