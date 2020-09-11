@@ -44,6 +44,10 @@ var importCommand = cli.Command{
 			logrus.Fatalf("Must provide \"host:port\" for import command!")
 		}
 
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
+		}
+
 		rt := NewRedisTrib()
 		if err := rt.ImportClusterCmd(context); err != nil {
 			return err
@@ -78,7 +82,7 @@ func (rt *RedisTrib) ImportClusterCmd(context *cli.Context) error {
 
 	// Connect to the source node.
 	logrus.Printf(">>> Connecting to the source Redis instance")
-	srcNode := NewClusterNode(source, context)
+	srcNode := NewClusterNode(source)
 
 	if srcNode.AssertCluster() {
 		logrus.Errorf("The source node should not be a cluster node.")

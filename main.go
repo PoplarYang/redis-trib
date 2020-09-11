@@ -55,6 +55,9 @@ var runtimeBeforeSubcommands = beforeSubcommands
 // runtimeCommandNotFound is the function to handle an invalid sub-command.
 var runtimeCommandNotFound = commandNotFound
 
+// RedisPassword
+var RedisPassword string
+
 // runtimeCommands is all sub-command
 var runtimeCommands = []cli.Command{
 	addNodeCommand,

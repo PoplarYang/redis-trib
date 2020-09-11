@@ -62,6 +62,11 @@ var reshardCommand = cli.Command{
 			cli.ShowCommandHelp(context, "reshard")
 			logrus.Fatalf("Must provide at least \"host:port\" for reshard command!")
 		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
+		}
+
 		rt := NewRedisTrib()
 		if err := rt.ReshardClusterCmd(context); err != nil {
 			return err

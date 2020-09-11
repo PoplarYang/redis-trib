@@ -14,11 +14,22 @@ var infoCommand = cli.Command{
 	Usage:       "display the info of redis cluster.",
 	ArgsUsage:   `host:port`,
 	Description: `The info command get info from redis cluster.`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
+	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 1 {
 			fmt.Printf("Incorrect Usage.\n\n")
 			cli.ShowCommandHelp(context, "info")
 			logrus.Fatalf("Must provide host:port for info command!")
+		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
 		}
 
 		rt := NewRedisTrib()

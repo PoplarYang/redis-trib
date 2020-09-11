@@ -14,11 +14,22 @@ var checkCommand = cli.Command{
 	Usage:       "check the redis cluster.",
 	ArgsUsage:   `host:port`,
 	Description: `The check command check for redis cluster.`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
+	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 1 {
 			fmt.Printf("Incorrect Usage.\n\n")
 			cli.ShowCommandHelp(context, "check")
 			logrus.Fatalf("Must provide host:port for check command!")
+		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
 		}
 
 		rt := NewRedisTrib()

@@ -15,11 +15,22 @@ var setTimeoutCommand = cli.Command{
 	Usage:       "set timeout configure for redis cluster.",
 	ArgsUsage:   `host:port milliseconds`,
 	Description: `The set-timeout command set a timeout for redis cluster.`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
+	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 2 {
 			fmt.Printf("Incorrect Usage.\n\n")
 			cli.ShowCommandHelp(context, "set-timeout")
 			logrus.Fatalf("Must provide \"host:port milliseconds\" for set-timeout command!")
+		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
 		}
 
 		rt := NewRedisTrib()

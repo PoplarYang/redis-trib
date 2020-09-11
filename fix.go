@@ -26,12 +26,21 @@ var fixCommand = cli.Command{
 			Value: "",
 			Usage: `password, the default value is "".`,
 		},
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 1 {
 			fmt.Printf("Incorrect Usage.\n\n")
 			cli.ShowCommandHelp(context, "fix")
 			logrus.Fatalf("Must provide at least \"host:port\" for fix command!")
+		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
 		}
 
 		rt := NewRedisTrib()

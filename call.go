@@ -15,11 +15,22 @@ var callCommand = cli.Command{
 	Usage:       "run command in redis cluster.",
 	ArgsUsage:   `host:port command arg arg .. arg`,
 	Description: `The call command for call cmd in every redis cluster node.`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
+	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() < 2 {
 			fmt.Printf("Incorrect Usage.\n\n")
 			cli.ShowCommandHelp(context, "call")
 			logrus.Fatalf("Must provide \"host:port command\" for call command!")
+		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
 		}
 
 		rt := NewRedisTrib()
@@ -43,6 +54,10 @@ func (rt *RedisTrib) CallClusterCmd(context *cli.Context) error {
 
 	cmd := strings.ToUpper(context.Args().Get(1))
 	cmdArgs := ToInterfaceArray(context.Args()[2:])
+
+	if context.String("password") != "" {
+		RedisPassword = context.String("password")
+	}
 
 	logrus.Printf(">>> Calling %s %s", cmd, cmdArgs)
 	_, err := rt.EachRunCommandAndPrint(cmd, cmdArgs...)

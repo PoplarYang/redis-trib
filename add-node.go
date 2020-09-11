@@ -44,6 +44,10 @@ var addNodeCommand = cli.Command{
 			logrus.Fatalf("Must provide \"new_host:new_port existing_host:existing_port\" for add-node command!")
 		}
 
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
+		}
+
 		rt := NewRedisTrib()
 		if err := rt.AddNodeClusterCmd(context); err != nil {
 			return err
@@ -92,7 +96,7 @@ func (rt *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
 	}
 
 	// Add the new node
-	newNode := NewClusterNode(newaddr, context)
+	newNode := NewClusterNode(newaddr)
 	newNode.Connect(true)
 	if !newNode.AssertCluster() { // quit if not in cluster mode
 		logrus.Fatalf("Node %s is not configured as a cluster node.", newNode.String())

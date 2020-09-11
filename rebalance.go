@@ -70,6 +70,10 @@ var rebalanceCommand = cli.Command{
 			logrus.Fatalf("Must provide at least \"host:port\" for rebalance command!")
 		}
 
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
+		}
+
 		rt := NewRedisTrib()
 		if err := rt.RebalanceClusterCmd(context); err != nil {
 			return err

@@ -23,8 +23,8 @@ const (
 
 // detail info for redis node.
 type NodeInfo struct {
-	host string
-	port uint
+	host       string
+	port       uint
 
 	name       string
 	addr       string
@@ -39,6 +39,12 @@ type NodeInfo struct {
 	slots      map[int]int
 	migrating  map[int]string
 	importing  map[int]string
+}
+
+func (ni *NodeInfo) SetPassword(context *cli.Context) {
+	if context.String("password") != "" {
+		ni.password = context.String("password")
+	}
 }
 
 func (ni *NodeInfo) HasFlag(flag string) bool {
@@ -65,7 +71,7 @@ type ClusterNode struct {
 	verbose       bool
 }
 
-func NewClusterNode(addr string, context *cli.Context) (node *ClusterNode) {
+func NewClusterNode(addr string) (node *ClusterNode) {
 
 	var host, port string
 	var err error
@@ -95,7 +101,7 @@ func NewClusterNode(addr string, context *cli.Context) (node *ClusterNode) {
 		info: &NodeInfo{
 			host:      host,
 			port:      uint(p),
-			password:  context.String("password"),
+			password:  RedisPassword,
 			slots:     make(map[int]int),
 			migrating: make(map[int]string),
 			importing: make(map[int]string),

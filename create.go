@@ -35,6 +35,10 @@ var createCommand = cli.Command{
 			logrus.Fatalf("Must provide at least one \"host:port\" for create command!")
 		}
 
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
+		}
+
 		rt := NewRedisTrib()
 		if err := rt.CreateClusterCmd(context); err != nil {
 			return err
@@ -51,7 +55,7 @@ func (rt *RedisTrib) CreateClusterCmd(context *cli.Context) error {
 		if addr == "" {
 			continue
 		}
-		node := NewClusterNode(addr, context)
+		node := NewClusterNode(addr)
 		node.Connect(true)
 		if !node.AssertCluster() {
 			logrus.Fatalf("Node %s is not configured as a cluster node.", node.String())
@@ -118,7 +122,7 @@ func (rt *RedisTrib) JoinCluster() {
 
 func (rt *RedisTrib) AllocSlots() {
 	// TODO:
-	var masters [](*ClusterNode)
+	var masters []*ClusterNode
 	nodeNum := len(rt.Nodes())
 	mastersNum := len(rt.Nodes()) / (rt.ReplicasNum() + 1)
 
@@ -130,8 +134,8 @@ func (rt *RedisTrib) AllocSlots() {
 	// This code assumes just that if the IP is different, than it is more
 	// likely that the instance is running in a different physical host
 	// or at least a different virtual machine.
-	var ips map[string][](*ClusterNode)
-	ips = make(map[string][](*ClusterNode))
+	var ips map[string][]*ClusterNode
+	ips = make(map[string][]*ClusterNode)
 	for _, node := range rt.Nodes() {
 		ips[node.Name()] = append(ips[node.Name()], node)
 	}

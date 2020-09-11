@@ -16,11 +16,22 @@ var delNodeCommand = cli.Command{
 	Usage:       "del a redis node from existed cluster.",
 	ArgsUsage:   `host:port node_id`,
 	Description: `The del-node command delete a node from redis cluster.`,
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
+	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 2 {
 			fmt.Printf("Incorrect Usage.\n\n")
 			cli.ShowCommandHelp(context, "del-node")
 			logrus.Fatalf("Must provide \"host:port node_id\" for del-node command!")
+		}
+
+		if context.String("password") != "" {
+			RedisPassword = context.String("password")
 		}
 
 		rt := NewRedisTrib()
