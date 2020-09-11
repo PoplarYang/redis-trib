@@ -31,6 +31,11 @@ var addNodeCommand = cli.Command{
 
     $ redis-trib add-node <--slave --master-id arg> new_host:new_port existing_host:existing_port`,
 		},
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is "".`,
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() < 2 {
@@ -87,7 +92,7 @@ func (self *RedisTrib) AddNodeClusterCmd(context *cli.Context) error {
 	}
 
 	// Add the new node
-	newNode := NewClusterNode(newaddr)
+	newNode := NewClusterNode(newaddr, context)
 	newNode.Connect(true)
 	if !newNode.AssertCluster() { // quit if not in cluster mode
 		logrus.Fatalf("Node %s is not configured as a cluster node.", newNode.String())

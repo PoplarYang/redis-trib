@@ -22,6 +22,11 @@ var createCommand = cli.Command{
 
     $ redis-trib create <--replicas 1> <host1:port1 ... hostN:portN>`,
 		},
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is ""`,
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() < 1 {
@@ -46,7 +51,7 @@ func (self *RedisTrib) CreateClusterCmd(context *cli.Context) error {
 		if addr == "" {
 			continue
 		}
-		node := NewClusterNode(addr)
+		node := NewClusterNode(addr, context)
 		node.Connect(true)
 		if !node.AssertCluster() {
 			logrus.Fatalf("Node %s is not configured as a cluster node.", node.String())

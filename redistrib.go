@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -542,7 +543,7 @@ func (self *RedisTrib) GetSlotOwners(slot int) [](*ClusterNode) {
 
 // Load cluster info from a cluster node.
 func (self *RedisTrib) LoadClusterInfoFromNode(addr string) error {
-	node := NewClusterNode(addr)
+	node := NewClusterNode(addr, &cli.Context{})
 
 	node.Connect(true)
 	if !node.AssertCluster() {
@@ -558,7 +559,7 @@ func (self *RedisTrib) LoadClusterInfoFromNode(addr string) error {
 			continue
 		}
 
-		fnode := NewClusterNode(n.String())
+		fnode := NewClusterNode(n.String(), &cli.Context{})
 		fnode.Connect(false)
 		if fnode.R() == nil {
 			continue

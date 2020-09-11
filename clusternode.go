@@ -8,9 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/garyburd/redigo/redis"
 	"os"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
+	"github.com/garyburd/redigo/redis"
 )
 
 const (
@@ -19,7 +21,6 @@ const (
 	AssignedHashSlot
 )
 
-///////////////////////////////////////////////////////////
 // detail info for redis node.
 type NodeInfo struct {
 	host string
@@ -27,6 +28,7 @@ type NodeInfo struct {
 
 	name       string
 	addr       string
+	password   string
 	flags      []string
 	replicate  string
 	pingSent   int
@@ -63,7 +65,8 @@ type ClusterNode struct {
 	verbose       bool
 }
 
-func NewClusterNode(addr string) (node *ClusterNode) {
+func NewClusterNode(addr string, context *cli.Context) (node *ClusterNode) {
+
 	var host, port string
 	var err error
 
@@ -86,11 +89,13 @@ func NewClusterNode(addr string) (node *ClusterNode) {
 	}
 
 	p, _ := strconv.ParseUint(port, 10, 0)
+
 	node = &ClusterNode{
 		r: nil,
 		info: &NodeInfo{
 			host:      host,
 			port:      uint(p),
+			password:  context.String("password"),
 			slots:     make(map[int]int),
 			migrating: make(map[int]string),
 			importing: make(map[int]string),
@@ -211,7 +216,12 @@ func (self *ClusterNode) Connect(abort bool) (err error) {
 		addr = fmt.Sprintf("%s:%d", self.info.host, self.info.port)
 	}
 	//client, err := redis.DialTimeout("tcp", addr, 0, 1*time.Second, 1*time.Second)
-	client, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(60*time.Second))
+	var client redis.Conn
+	if self.info.password != "" {
+		client, err = redis.Dial("tcp", addr, redis.DialConnectTimeout(60*time.Second), redis.DialPassword(self.info.password))
+	} else {
+		client, err = redis.Dial("tcp", addr, redis.DialConnectTimeout(60*time.Second))
+	}
 	if err != nil {
 		if abort {
 			logrus.Fatalf("Sorry, connect to node %s failed in abort mode!", addr)

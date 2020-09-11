@@ -31,6 +31,11 @@ var importCommand = cli.Command{
 			Name:  "replace",
 			Usage: `Replace flag for import operation.`,
 		},
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is "".`,
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 1 {
@@ -73,7 +78,7 @@ func (self *RedisTrib) ImportClusterCmd(context *cli.Context) error {
 
 	// Connect to the source node.
 	logrus.Printf(">>> Connecting to the source Redis instance")
-	srcNode := NewClusterNode(source)
+	srcNode := NewClusterNode(source, context)
 
 	if srcNode.AssertCluster() {
 		logrus.Errorf("The source node should not be a cluster node.")

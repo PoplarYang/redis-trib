@@ -57,6 +57,11 @@ var rebalanceCommand = cli.Command{
 			Value: RebalanceDefaultThreshold,
 			Usage: `Threshold for rebalance redis cluster.`,
 		},
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is "".`,
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 1 {

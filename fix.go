@@ -21,6 +21,11 @@ var fixCommand = cli.Command{
 			Value: MigrateDefaultTimeout,
 			Usage: `timeout for fix the redis cluster.`,
 		},
+		cli.StringFlag{
+			Name:  "password, a",
+			Value: "",
+			Usage: `password, the default value is "".`,
+		},
 	},
 	Action: func(context *cli.Context) error {
 		if context.NArg() != 1 {
