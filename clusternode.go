@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -41,12 +40,6 @@ type NodeInfo struct {
 	importing  map[int]string
 }
 
-func (ni *NodeInfo) SetPassword(context *cli.Context) {
-	if context.String("password") != "" {
-		ni.password = context.String("password")
-	}
-}
-
 func (ni *NodeInfo) HasFlag(flag string) bool {
 	for _, f := range ni.flags {
 		if strings.Contains(f, flag) {
@@ -66,8 +59,8 @@ type ClusterNode struct {
 	r             redis.Conn
 	info          *NodeInfo
 	dirty         bool
-	friends       [](*NodeInfo)
-	replicasNodes [](*ClusterNode)
+	friends       []*NodeInfo
+	replicasNodes []*ClusterNode
 	verbose       bool
 }
 
@@ -427,23 +420,26 @@ func (cn *ClusterNode) FlushNodeConfig() {
 			return
 		}
 	} else {
-		// TODO: run addslots cmd
 		var array []int
-		for s, value := range cn.Slots() {
+		for slot, value := range cn.Slots() {
 			if value == NewHashSlot {
-				array = append(array, s)
-				cn.info.slots[s] = AssignedHashSlot
+				array = append(array, slot)
+				cn.info.slots[slot] = AssignedHashSlot
+				_, err := cn.ClusterAddSlots(slot)
+				if err != nil {
+					logrus.Printf("ClusterAddSlots slot: %s with error %s", slot, err)
+					return
+				}
 			}
-			cn.ClusterAddSlots(array)
 		}
-	}
 
+	}
 	cn.dirty = false
 }
 
 // XXX: check the error for call CLUSTER addslots
 func (cn *ClusterNode) ClusterAddSlots(args ...interface{}) (ret string, err error) {
-	return redis.String(cn.Call("CLUSTER", "addslots", args))
+	return redis.String(cn.Call("CLUSTER", "addslots", args[0]))
 }
 
 // XXX: check the error for call CLUSTER delslots

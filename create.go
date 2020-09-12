@@ -142,7 +142,7 @@ func (rt *RedisTrib) AllocSlots() {
 
 	// Select master instances
 	logrus.Printf("Using %d masters:", mastersNum)
-	var interleaved [](*ClusterNode)
+	var interleaved []*ClusterNode
 	stop := false
 	for !stop {
 		// Take one node from each IP until we run out of nodes
