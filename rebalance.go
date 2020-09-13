@@ -240,7 +240,7 @@ func (rt *RedisTrib) RebalanceClusterCmd(context *cli.Context) error {
 		}
 
 		if numSlots > 0 {
-			logrus.Printf("Moving %d slots from %s to %s", numSlots, src.String(), dst.String())
+			logrus.Printf("Moving %f slots from %s to %s", numSlots, src.String(), dst.String())
 
 			// Actaully move the slots.
 			// TODO: add move slot code.

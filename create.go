@@ -20,7 +20,7 @@ var createCommand = cli.Command{
 			Value: 0,
 			Usage: `Slave number for every master created, the default value is none.
 
-    $ redis-trib create <--replicas 1> <host1:port1 ... hostN:portN>`,
+    $ redis-trib create <--replicas 1> <--password ""> <host1:port1 ... hostN:portN>`,
 		},
 		cli.StringFlag{
 			Name:  "password, a",

@@ -1,4 +1,4 @@
-module github.com/soarpenguin/redis-trib
+module github.com/PoplarYang/redis-trib
 
 go 1.13
 

@@ -427,7 +427,7 @@ func (cn *ClusterNode) FlushNodeConfig() {
 				cn.info.slots[slot] = AssignedHashSlot
 				_, err := cn.ClusterAddSlots(slot)
 				if err != nil {
-					logrus.Printf("ClusterAddSlots slot: %s with error %s", slot, err)
+					logrus.Printf("ClusterAddSlots slot: %d with error %s", slot, err)
 					return
 				}
 			}

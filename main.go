@@ -17,6 +17,10 @@ var version = ""
 // and will be populated by the Makefile
 var gitCommit = ""
 
+// gitUrl will be the hash that the binary was built from
+// and will be populated by the Makefile
+var gitURL = ""
+
 const (
 	// name holds the name of this program
 	name  = "redis-trib"
@@ -110,11 +114,17 @@ func commandNotFound(c *cli.Context, command string) {
 
 // makeVersionString returns a multi-line string describing the runtime version.
 func makeVersionString() string {
-	v := []string{
-		version,
+	v := []string{}
+	if version != "" {
+		v = append(v, version)
 	}
+
 	if gitCommit != "" {
 		v = append(v, fmt.Sprintf("commit: %s", gitCommit))
+	}
+
+	if gitURL != "" {
+		v = append(v, fmt.Sprintf("giturl: %s", gitURL))
 	}
 
 	return strings.Join(v, "\n")
@@ -128,8 +138,8 @@ func main() {
 	app.Usage = usage
 	app.Version = makeVersionString()
 	app.Flags = runtimeFlags
-	app.Author = "soarpenguin"
-	app.Email = "soarpenguin@gmail.com"
+	app.Author = "PoplarYang"
+	app.Email = "echohiyang@foxmail.com"
 	app.EnableBashCompletion = true
 	app.CommandNotFound = runtimeCommandNotFound
 	app.Before = runtimeBeforeSubcommands

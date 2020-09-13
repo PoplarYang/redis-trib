@@ -16,17 +16,15 @@ Dependencies are handled by [govendor][], simple install it and type `govendor a
 
 #### Restore project env in first build
 ```console
-$ git clone https://github.com/soarpenguin/redis-trib.git
+$ git clone https://github.com/PoplarYang/redis-trib.git
 $ cd redis-trib
-$ make govendor
-$ make bin
-$ PROG=./redis-trib source ./autocomplete/bash_autocomplete
+$ make deps
 ```
 
 #### Build the code
 ```console
 $ cd redis-trib
-$ make bin
+$ make all
 ```
 
 ## Usage
@@ -42,11 +40,12 @@ USAGE:
    redis-trib [global options] command [command options] [arguments...]
 
 VERSION:
-   v0.1.0
-commit: 533d96aba4b0e73649dcf81209156230698666aa
+   v0.2.1
+commit: 89485bd15e7fd42d365a66b4cc87339461e718c7
+giturl: https://github.com/PoplarYang/redis-trib
 
-AUTHOR(S):
-   soarpenguin <soarpenguin@gmail.com>
+AUTHOR:
+   PoplarYang <echohiyang@foxmail.com>
 
 COMMANDS:
      add-node, add  add a new redis node to existed cluster.
@@ -60,6 +59,7 @@ COMMANDS:
      rebalance      rebalance the redis cluster.
      reshard        reshard the redis cluster.
      set-timeout    set timeout configure for redis cluster.
+     help, h        Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --debug             enable debug output for logging
