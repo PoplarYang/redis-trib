@@ -66,7 +66,7 @@ linux:
 	$(call baseinfo,amd64,linux)
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_GCFLAGS) $(GO_ASMFLAGS) -ldflags $(GO_LDFLAGS) -o $(LINUX-AMD64)
 	$(call baseinfo,arm,linux)
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm $(GO) build $(GO_GCFLAGS) $(GO_ASMFLAGS) -ldflags $(GO_LDFLAGS) -o $(LINUX-ARM64)
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build $(GO_GCFLAGS) $(GO_ASMFLAGS) -ldflags $(GO_LDFLAGS) -o $(LINUX-ARM64)
 	$(call baseinfo,mips64le,linux)
 	CGO_ENABLED=0 GOOS=linux GOARCH=mips64le $(GO) build $(GO_GCFLAGS) $(GO_ASMFLAGS) -ldflags $(GO_LDFLAGS) -o $(LINUX-MIPS64EL)
 
